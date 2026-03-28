@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PlayersService } from './players.service';
@@ -37,7 +38,7 @@ export class PlayersController {
   @ApiOperation({ summary: 'Obtener un jugador por ID' })
   @ApiResponse({ status: 200, description: 'Jugador encontrado', type: Player })
   @ApiResponse({ status: 404, description: 'Jugador no encontrado' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.playersService.findOne(id);
   }
 
@@ -45,7 +46,7 @@ export class PlayersController {
   @ApiOperation({ summary: 'Actualizar datos de un jugador' })
   @ApiResponse({ status: 200, description: 'Jugador actualizado', type: Player })
   @ApiResponse({ status: 404, description: 'Jugador no encontrado' })
-  update(@Param('id') id: string, @Body() updatePlayerDto: UpdatePlayerDto) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() updatePlayerDto: UpdatePlayerDto) {
     return this.playersService.update(id, updatePlayerDto);
   }
 
@@ -53,7 +54,7 @@ export class PlayersController {
   @ApiOperation({ summary: 'Eliminar (desactivar) un jugador' })
   @ApiResponse({ status: 200, description: 'Jugador desactivado' })
   @ApiResponse({ status: 404, description: 'Jugador no encontrado' })
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.playersService.remove(id);
   }
 }

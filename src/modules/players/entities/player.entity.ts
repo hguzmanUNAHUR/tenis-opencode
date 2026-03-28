@@ -10,7 +10,7 @@ export enum PlayerStatus {
 }
 
 export class Player {
-  id: string;
+  id: number;
   firstName: string;
   lastName: string;
   email: string;
