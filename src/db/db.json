@@ -24,11 +24,22 @@
       "endDate": "2026-05-25",
       "maxParticipants": 32,
       "genderRestriction": "MALE",
-      "status": "DRAFT",
+      "status": "REGISTRATION_OPEN",
       "createdAt": "2026-03-28T18:49:12.358Z",
       "updatedAt": "2026-03-28T18:49:12.358Z"
     }
   ],
+  "registrations": [
+    {
+      "id": 1,
+      "tournamentId": 1,
+      "playerId": 1,
+      "status": "CANCELLED",
+      "registeredAt": "2026-03-28T19:08:32.939Z",
+      "updatedAt": "2026-03-28T19:08:36.582Z"
+    }
+  ],
   "nextPlayerId": 2,
-  "nextTournamentId": 2
+  "nextTournamentId": 2,
+  "nextRegistrationId": 2
 }
