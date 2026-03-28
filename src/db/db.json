@@ -1,0 +1,17 @@
+{
+  "players": [
+    {
+      "id": "4fe56ed8-52c9-4b40-bf9b-f76604da1c16",
+      "firstName": "Juan",
+      "lastName": "Martinez",
+      "email": "juan@test.com",
+      "dateOfBirth": "1995-03-15",
+      "gender": "MALE",
+      "nationality": "ARG",
+      "status": "INACTIVE",
+      "rankingPoints": 1500,
+      "createdAt": "2026-03-28T17:36:02.367Z",
+      "updatedAt": "2026-03-28T17:36:16.505Z"
+    }
+  ]
+}
