@@ -1,17 +1,35 @@
-import express from 'express';
-import playersRoutes from './players/players.routes';
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { AppModule } from './app.module';
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
 
-app.use(express.json());
+  app.setGlobalPrefix('api');
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'AceManager API running' });
-});
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
-app.use('/api', playersRoutes);
+  const config = new DocumentBuilder()
+    .setTitle('AceManager API')
+    .setDescription('Plataforma de gestión de torneos de tenis')
+    .setVersion('1.0')
+    .build();
 
-app.listen(PORT, () => {
-  console.log(`🚀 AceManager running on http://localhost:${PORT}`);
-});
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document);
+
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+
+  console.log(`🚀 AceManager running on: http://localhost:${port}`);
+  console.log(`📚 API Docs: http://localhost:${port}/docs`);
+}
+
+bootstrap();

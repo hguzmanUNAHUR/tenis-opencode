@@ -1,17 +1,17 @@
 {
   "players": [
     {
-      "id": "4fe56ed8-52c9-4b40-bf9b-f76604da1c16",
+      "id": "c2bcb173-b17d-46dd-98bd-18fe54e034ff",
       "firstName": "Juan",
       "lastName": "Martinez",
       "email": "juan@test.com",
       "dateOfBirth": "1995-03-15",
       "gender": "MALE",
       "nationality": "ARG",
-      "status": "INACTIVE",
-      "rankingPoints": 1500,
-      "createdAt": "2026-03-28T17:36:02.367Z",
-      "updatedAt": "2026-03-28T17:36:16.505Z"
+      "status": "ACTIVE",
+      "rankingPoints": 0,
+      "createdAt": "2026-03-28T18:03:43.101Z",
+      "updatedAt": "2026-03-28T18:03:43.101Z"
     }
   ]
 }
