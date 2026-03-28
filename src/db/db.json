@@ -1,7 +1,7 @@
 {
   "players": [
     {
-      "id": "c2bcb173-b17d-46dd-98bd-18fe54e034ff",
+      "id": 1,
       "firstName": "Juan",
       "lastName": "Martinez",
       "email": "juan@test.com",
@@ -13,5 +13,22 @@
       "createdAt": "2026-03-28T18:03:43.101Z",
       "updatedAt": "2026-03-28T18:03:43.101Z"
     }
-  ]
+  ],
+  "tournaments": [
+    {
+      "id": 1,
+      "name": "ATP Buenos Aires 2026",
+      "type": "SINGLES",
+      "category": "ATP_250",
+      "startDate": "2026-05-15",
+      "endDate": "2026-05-25",
+      "maxParticipants": 32,
+      "genderRestriction": "MALE",
+      "status": "DRAFT",
+      "createdAt": "2026-03-28T18:49:12.358Z",
+      "updatedAt": "2026-03-28T18:49:12.358Z"
+    }
+  ],
+  "nextPlayerId": 2,
+  "nextTournamentId": 2
 }

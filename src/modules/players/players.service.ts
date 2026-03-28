@@ -1,23 +1,27 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { randomUUID } from 'crypto';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { Player, PlayerStatus } from './entities/player.entity';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
 
-const DB_PATH = path.join(__dirname, '../../db/db.json');
+const DB_PATH = path.join(process.cwd(), 'src/db/db.json');
 
 interface DbData {
   players: Player[];
+  nextPlayerId: number;
 }
 
 function readDb(): DbData {
   if (!fs.existsSync(DB_PATH)) {
-    return { players: [] };
+    return { players: [], nextPlayerId: 1 };
   }
   const data = fs.readFileSync(DB_PATH, 'utf-8');
-  return JSON.parse(data);
+  const parsed = JSON.parse(data);
+  return {
+    players: parsed.players || [],
+    nextPlayerId: parsed.nextPlayerId || 1,
+  };
 }
 
 function writeDb(data: DbData): void {
@@ -26,9 +30,6 @@ function writeDb(data: DbData): void {
 
 @Injectable()
 export class PlayersService {
-  /**
-   * Lista todos los jugadores activos ordenados por ranking (mayor points primero).
-   */
   findAll(): Player[] {
     const db = readDb();
     return db.players
@@ -36,11 +37,7 @@ export class PlayersService {
       .sort((a, b) => b.rankingPoints - a.rankingPoints);
   }
 
-  /**
-   * Obtiene un jugador por su ID.
-   * @throws NotFoundException si no existe
-   */
-  findOne(id: string): Player {
+  findOne(id: number): Player {
     const db = readDb();
     const player = db.players.find((p) => p.id === id);
 
@@ -51,10 +48,6 @@ export class PlayersService {
     return player;
   }
 
-  /**
-   * Crea un nuevo jugador.
-   * @throws BadRequestException si el email ya existe
-   */
   create(createPlayerDto: CreatePlayerDto): Player {
     const db = readDb();
 
@@ -64,7 +57,7 @@ export class PlayersService {
 
     const now = new Date();
     const newPlayer: Player = {
-      id: randomUUID(),
+      id: db.nextPlayerId,
       ...createPlayerDto,
       status: PlayerStatus.ACTIVE,
       rankingPoints: 0,
@@ -73,17 +66,13 @@ export class PlayersService {
     };
 
     db.players.push(newPlayer);
+    db.nextPlayerId++;
     writeDb(db);
 
     return newPlayer;
   }
 
-  /**
-   * Actualiza datos de un jugador.
-   * @throws NotFoundException si no existe
-   * @throws BadRequestException si el nuevo email ya existe
-   */
-  update(id: string, updatePlayerDto: UpdatePlayerDto): Player {
+  update(id: number, updatePlayerDto: UpdatePlayerDto): Player {
     const db = readDb();
     const index = db.players.findIndex((p) => p.id === id);
 
@@ -111,12 +100,7 @@ export class PlayersService {
     return updatedPlayer;
   }
 
-  /**
-   * Elimina (desactiva) un jugador.
-   * Es un delete lógico, cambia status a INACTIVE.
-   * @throws NotFoundException si no existe
-   */
-  remove(id: string): Player {
+  remove(id: number): Player {
     const db = readDb();
     const index = db.players.findIndex((p) => p.id === id);
 
