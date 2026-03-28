@@ -1,26 +1,46 @@
 # AceManager - Referencia de API
 
+## Stack Tecnológico
+- **Framework:** NestJS
+- **Validación:** class-validator
+- **Documentación:** Swagger (disponible en `/docs`)
+- **Persistencia:** JSON file (`src/db/db.json`)
+
+---
+
 ## Endpoints: Jugadores
 
 ### GET /api/players
 Lista todos los jugadores activos ordenados por ranking (mayor points primero).
 
 ```typescript
-// Ordena por rankingPoints de mayor a menor
-const sortedPlayers = db.players
-  .filter(p => p.status === 'ACTIVE')  // Solo activos
-  .sort((a, b) => b.rankingPoints - a.rankingPoints);
+// PlayersService.findAll()
+findAll(): Player[] {
+  return db.players
+    .filter((p) => p.status === PlayerStatus.ACTIVE)  // Solo activos
+    .sort((a, b) => b.rankingPoints - a.rankingPoints);
+}
 ```
 
-**Respuesta:** Array de `Player[]`
+**Respuesta:** `Player[]`
 
 ---
 
 ### GET /api/players/:id
 Obtiene un jugador específico por su ID.
 
-**Params:** `id` (UUID del jugador)
+```typescript
+// PlayersService.findOne()
+findOne(id: string): Player {
+  const player = db.players.find((p) => p.id === id);
+  if (!player) {
+    throw new NotFoundException(`Player with ID ${id} not found`);
+  }
+  return player;
+}
+```
 
+**Params:** `id` (UUID del jugador)  
 **Respuesta:** `Player` o 404 si no existe
 
 ---
@@ -40,25 +60,43 @@ Crea un nuevo jugador.
 }
 ```
 
-**Validaciones:**
-- Todos los campos son requeridos
-- Email debe ser único
+**Validaciones (class-validator):**
+| Campo | Validación |
+|-------|------------|
+| firstName | `@IsString()` - requerido |
+| lastName | `@IsString()` - requerido |
+| email | `@IsEmail()` - requerido, único |
+| dateOfBirth | `@IsDateString()` - requerido |
+| gender | `@IsEnum(Gender)` - requerido (MALE/FEMALE) |
+| nationality | `@IsString()` - requerido |
 
 **Valores por defecto:**
-- `status`: "ACTIVE"
-- `rankingPoints`: 0
+- `status`: `"ACTIVE"`
+- `rankingPoints`: `0`
 
-**Respuesta:** `Player` creado (201)
+**Respuesta:** `Player` creado (201)  
+**Errores:** 400 si el email ya existe
 
 ---
 
-### PUT /api/players/:id
-Actualiza datos de un jugador.
+### PATCH /api/players/:id
+Actualiza datos de un jugador (parcial).
 
-**Body (parcial):**
+```typescript
+// PlayersService.update()
+update(id: string, updatePlayerDto: UpdatePlayerDto): Player {
+  // Valida que el nuevo email no exista en otro jugador
+  if (updatePlayerDto.email && emailExists(updatePlayerDto.email)) {
+    throw new BadRequestException('Email already exists');
+  }
+  // Actualiza solo los campos enviados
+  return { ...player, ...updatePlayerDto, updatedAt: new Date() };
+}
+```
+
+**Body (ejemplo):**
 ```json
 {
-  "firstName": "Juan Carlos",
   "rankingPoints": 1500,
   "status": "SUSPENDED"
 }
@@ -72,29 +110,79 @@ Actualiza datos de un jugador.
 Elimina (desactiva) un jugador.
 
 > **Nota:** Es un delete lógico, no elimina de la DB.
-> Cambia el status a "INACTIVE".
+> Cambia el status a `"INACTIVE"`.
 
-**Respuesta:** `{ message: "Player deactivated", player: Player }`
+```typescript
+// PlayersService.remove()
+remove(id: string): Player {
+  db.players[index].status = PlayerStatus.INACTIVE;
+  return db.players[index];
+}
+```
+
+**Respuesta:** `Player` con status "INACTIVE"
 
 ---
 
 ## Modelo de Datos
 
-### Player
+### Player Entity
 ```typescript
-interface Player {
+// src/modules/players/entities/player.entity.ts
+
+export enum Gender {
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
+}
+
+export enum PlayerStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  SUSPENDED = 'SUSPENDED',
+}
+
+export class Player {
   id: string;              // UUID
   firstName: string;
   lastName: string;
   email: string;           // Unique
   dateOfBirth: string;     // ISO date
-  gender: 'MALE' | 'FEMALE';
-  nationality: string;     // Código país (ARG, ESP, etc.)
-  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  gender: Gender;
+  nationality: string;    // Código país (ARG, ESP, etc.)
+  status: PlayerStatus;
   rankingPoints: number;
-  createdAt: string;       // ISO timestamp
-  updatedAt: string;       // ISO timestamp
+  createdAt: Date;
+  updatedAt: Date;
 }
+```
+
+---
+
+## Estructura del Proyecto
+
+```
+src/
+├── main.ts                    # Entry point, Swagger setup
+├── app.module.ts               # Módulo raíz
+├── db/db.json                  # Persistencia JSON
+└── modules/
+    └── players/
+        ├── players.module.ts           # Módulo NestJS
+        ├── players.controller.ts       # Rutas (@Controller)
+        ├── players.service.ts         # Lógica de negocio
+        ├── entities/
+        │   └── player.entity.ts       # Modelo y enums
+        └── dto/
+            ├── create-player.dto.ts   # Validación creación
+            └── update-player.dto.ts  # Validación actualización
+```
+
+### Flujo de una petición
+```
+Request → Controller (@Get/@Post/etc) 
+         → Service (lógica de negocio) 
+         → Entity/DTO (validación con class-validator)
+         → Response
 ```
 
 ---
@@ -103,20 +191,82 @@ interface Player {
 
 Los datos se almacenan en `src/db/db.json`.
 
-Estructura:
 ```json
 {
-  "players": [...]
+  "players": [
+    {
+      "id": "uuid",
+      "firstName": "Juan",
+      "lastName": "Martinez",
+      "email": "juan@test.com",
+      "dateOfBirth": "1995-03-15",
+      "gender": "MALE",
+      "nationality": "ARG",
+      "status": "ACTIVE",
+      "rankingPoints": 0,
+      "createdAt": "2026-03-28T18:03:43.101Z",
+      "updatedAt": "2026-03-28T18:03:43.101Z"
+    }
+  ]
 }
 ```
 
 ---
 
-## Próximos pasos (Fase 2)
+## Documentación Swagger
 
-1. **Validación** - Agregar express-validator
-2. **ABM Torneos** - CRUD de torneos
-3. **Inscripciones** - Registro de jugadores en torneos
-4. **Cuadros** - Generación automática de brackets
-5. **Partidos** - State machine de puntuación
-6. **Ranking** - Recálculo de puntos por categoría
+Disponible en: `http://localhost:3000/docs`
+
+Muestra todos los endpoints con:
+- Descripción de cada endpoint
+- Schema de Request/Response
+- Posibilidad de probar endpoints
+
+---
+
+## Próximos Pasos
+
+### Fase 2: ABM Torneos
+- [ ] CRUD de torneos
+- [ ] Tipos: Singles, Dobles, Dobles Mixtos
+- [ ] Categorías: Futures, Challenger, ATP 250/500, Grand Slam
+
+### Fase 3: Inscripciones
+- [ ] Registro de jugadores en torneos
+- [ ] Validación de elegibilidad (género, ranking)
+
+### Fase 4: Motor de Cuadros
+- [ ] Generación automática de brackets
+- [ ] Manejo de byes
+- [ ] Avance automático de ganadores
+
+### Fase 5: Partidos
+- [ ] State machine de puntuación
+- [ ] Manejo de tie-breaks
+- [ ] Casos especiales: retired, walkover
+
+### Fase 6: Ranking
+- [ ] Sistema de puntos por categoría
+- [ ] Recálculo automático post-torneo
+
+---
+
+## Cómo ejecutar
+
+```bash
+# Instalación de dependencias
+npm install
+
+# Desarrollo (con hot-reload)
+npm run start:dev
+
+# Build
+npm run build
+
+# Producción
+npm run start:prod
+```
+
+**Endpoints útiles:**
+- Health: `GET /health`
+- Docs: `GET /docs`
